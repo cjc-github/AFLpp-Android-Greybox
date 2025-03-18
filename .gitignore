@@ -5,3 +5,5 @@ android-ndk-r25c/
 ndk.zip
 
 android/app-debug-zip/
+fuzzgoat/fuzzgoat
+fuzzgoat/fuzzgoat_ASAN
