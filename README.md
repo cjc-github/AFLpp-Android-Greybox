@@ -49,7 +49,7 @@ cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/
 cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
 
 # 然后构建
-build
+make
 ```
 
 
@@ -192,10 +192,226 @@ cd /data/local/tmp
 
 ```bash
 adb shell
-cd /data/local/tmps
+cd /data/local/tmp
 ./afl-fuzz -i in -o out -t 10000+ -m none -O -- ./server @@
 
 # 如果确保./server在执行种子时不会导致崩溃，那么灰盒模糊测试失败的原因就在于server中使用了dlopen函数
 ```
 
 实际上，这个灰盒模糊测试还在测试中。等待修复成功。
+
+
+
+
+
+# 三、android fuzzing arm
+
+## 3.1 jenv
+
+按照章节一进行arm64架构配置
+
+```bash
+cd jenv
+mkdir build && cd build
+# toollcain_file的地址需要精准
+cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a ..
+make
+
+adb push libjenv.so /data/local/tmp
+```
+
+生成arm64架构的libjenv.so文件
+
+
+
+## 3.2 native
+
+```bash
+cd native
+mkdir build && cd build
+# toollcain_file的地址需要精准
+cmake -DANDROID_PLATFORM=31 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a ..
+
+
+make
+adb push fuzz /data/local/tmp
+adb push ../lib/libblogfuzz.so /data/local/tmp
+# 不考虑afl.js文件
+# adb push ../afl.js /data/local/tmp
+
+# 验证
+adb shell
+cd /data/local/tmp
+./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
+```
+
+运行截图：
+
+![image-20250319172116752](README.assets/image-20250319172116752.png)
+
+验证:
+
+```bash
+adb shell
+killall -9 afl-fuzz
+cd /data/local/tmp
+# 复现
+LD_PRELOAD=./afl-frida-trace.so ./fuzz ./out/default/crashes/id***
+```
+
+
+
+## 3.3 slinked_jni
+
+```bash
+cd native
+mkdir build && cd build
+# toollcain_file的地址需要精准
+cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a ..
+make
+
+adb push fuzz /data/local/tmp
+adb push ../afl.js ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp
+```
+
+
+
+## 3.4 wliked_jni
+
+```bash
+cd native
+mkdir build && cd build
+# toollcain_file的地址需要精准 
+cmake -DANDROID_PLATFORM=31 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
+
+make
+adb push fuzz /data/local/tmp
+adb push ../lib/libblogfuzz.so /data/local/tmp
+# 不考虑afl.js文件
+#　adb push ../afl.js /data/local/tmp
+
+# 验证
+adb shell
+cd /data/local/tmp
+./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
+```
+
+
+
+# 四、Android fuzzing x86_64
+
+## 4.1 jenv
+
+按照章节一进行x86_64架构配置
+
+```bash
+cd jenv
+mkdir build && cd build
+# toollcain_file的地址需要精准
+cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
+make
+
+adb push libjenv.so /data/local/tmp
+```
+
+生成x86_64架构的libjenv.so文件
+
+
+
+## 4.2 native
+
+```bash
+cd native
+mkdir build && cd build
+cp ../apk/qb.blogfuzz/lib/x86_64/libblogfuzz.so ./lib/
+
+
+# toollcain_file的地址需要精准
+cmake -DANDROID_PLATFORM=31 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
+
+make
+
+adb push fuzz /data/local/tmp
+adb push ../afl.js ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp
+
+# 验证
+adb shell
+cd /data/local/tmp
+dd if=/dev/urandom of=in/sample.bin bs=1 count=16
+./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
+
+# 如果运行不起来，则将afl.rs文件删除，重试
+```
+
+
+
+## 4.3 slinked_jni
+
+```bash
+cd slinked_jni
+cp ../apk/qb.blogfuzz/lib/x86_64/libblogfuzz.so ./lib/
+cp ../jenv/build/libjenv.so ./lib/
+
+
+mkdir build && cd build
+
+# toollcain_file的地址需要精准
+cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
+
+make
+
+adb push fuzz /data/local/tmp
+adb push ../afl.js ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp
+
+# 验证
+adb shell
+cd /data/local/tmp
+dd if=/dev/urandom of=in/sample.bin bs=1 count=16
+./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
+
+# 如果运行不起来，则将afl.rs文件删除，重试
+```
+
+
+
+
+
+## 4.4 wlinked_jni
+
+```bash
+cd native
+cp ../apk/qb.blogfuzz/lib/x86_64/libblogfuzz.so ./lib/
+cp ../jenv/build/libjenv.so ./lib/
+
+mkdir build && cd build
+# toollcain_file的地址需要精准 
+cmake -DANDROID_PLATFORM=31 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
+
+make
+
+adb push fuzz /data/local/tmp
+adb push ../afl.js ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp
+
+# 验证
+adb shell
+cd /data/local/tmp
+./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
+
+# 如果运行不起来，则将afl.rs文件删除，重试
+```
+
+
+
+
+
+测试
+
+```
+
+
+cmake -DANDROID_PLATFORM=31 -DCMAKE_TOOLCHAIN_FILE=/home/test/TCL/AFLpp-Android-Greybox/android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
+
+
+/home/test/TCL/AFLpp-Android-Greybox/android-ndk-r25c
+```
+

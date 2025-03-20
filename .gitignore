@@ -7,3 +7,10 @@ ndk.zip
 android/app-debug-zip/
 fuzzgoat/fuzzgoat
 fuzzgoat/fuzzgoat_ASAN
+
+
+android_fuzzing/apk/qb.blogfuzz
+android_fuzzing/jenv/build
+android_fuzzing/native/build
+android_fuzzing/slinked_jni/build
+android_fuzzing/wlinked_jni/build
