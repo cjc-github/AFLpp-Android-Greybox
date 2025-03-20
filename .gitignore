@@ -11,6 +11,10 @@ fuzzgoat/fuzzgoat_ASAN
 
 android_fuzzing/apk/qb.blogfuzz
 android_fuzzing/jenv/build
+android_fuzzing/jenv/lib
 android_fuzzing/native/build
+android_fuzzing/native/lib
 android_fuzzing/slinked_jni/build
+android_fuzzing/slinked_jni/lib
 android_fuzzing/wlinked_jni/build
+android_fuzzing/wlinked_jni/lib

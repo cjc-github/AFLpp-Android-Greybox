@@ -228,12 +228,15 @@ adb push libjenv.so /data/local/tmp
 
 ```bash
 cd native
-mkdir build && cd build
-# toollcain_file的地址需要精准
-cmake -DANDROID_PLATFORM=31 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a ..
+cp ../apk/qb.blogfuzz/lib/arm64-v8a/libblogfuzz.so ./lib/
 
+mkdir build && cd build
+
+# toollcain_file的地址需要精准
+cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a ..
 
 make
+
 adb push fuzz /data/local/tmp
 adb push ../lib/libblogfuzz.so /data/local/tmp
 # 不考虑afl.js文件
@@ -242,6 +245,9 @@ adb push ../lib/libblogfuzz.so /data/local/tmp
 # 验证
 adb shell
 cd /data/local/tmp
+rm -rf in out
+mkdir in
+dd if=/dev/urandom of=in/sample.bin bs=1 count=16
 ./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
 ```
 
@@ -264,7 +270,10 @@ LD_PRELOAD=./afl-frida-trace.so ./fuzz ./out/default/crashes/id***
 ## 3.3 slinked_jni
 
 ```bash
-cd native
+# 验证
+adb shell
+cd /data/local/tmp
+./afl-fuzz -i in -o out -O -G　256 -- ./fuzzcd native
 mkdir build && cd build
 # toollcain_file的地址需要精准
 cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a ..
@@ -272,6 +281,11 @@ make
 
 adb push fuzz /data/local/tmp
 adb push ../afl.js ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp
+
+# 验证
+adb shell
+cd /data/local/tmp
+./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
 ```
 
 
