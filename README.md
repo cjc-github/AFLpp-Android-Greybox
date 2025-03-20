@@ -322,12 +322,11 @@ adb push libjenv.so /data/local/tmp
 
 ```bash
 cd native
-mkdir build && cd build
 cp ../apk/qb.blogfuzz/lib/x86_64/libblogfuzz.so ./lib/
-
+mkdir build && cd build
 
 # toollcain_file的地址需要精准
-cmake -DANDROID_PLATFORM=31 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
+cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
 
 make
 
@@ -385,7 +384,7 @@ cp ../jenv/build/libjenv.so ./lib/
 
 mkdir build && cd build
 # toollcain_file的地址需要精准 
-cmake -DANDROID_PLATFORM=31 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
+cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
 
 make
 
