@@ -27,8 +27,8 @@ int init_java_env(JavaCTX *ctx, char **jvm_options, uint8_t jvm_nb_options) {
   }
 
   if ((JniInvocationInit = dlsym(runtime_dso, "JniInvocationInit")) == NULL) {
-   ALOGE("[!] %s\n", dlerror());
-   return JNI_ERR;
+    ALOGE("[!] %s\n", dlerror());
+    return JNI_ERR;
   }
 
   if ((JNI_CreateJVM = (JNI_CreateJavaVM_t) dlsym(runtime_dso, "JNI_CreateJavaVM")) == NULL) {

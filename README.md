@@ -321,7 +321,6 @@ cd /data/local/tmp
 ```bash
 cd jenv
 mkdir build && cd build
-# toollcain_file的地址需要精准
 cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
 make
 
@@ -392,15 +391,15 @@ dd if=/dev/urandom of=in/sample.bin bs=1 count=16
 ## 4.4 wlinked_jni
 
 ```bash
-cd native
+cd wlinked_jni
 cp ../apk/qb.blogfuzz/lib/x86_64/libblogfuzz.so ./lib/
 cp ../jenv/build/libjenv.so ./lib/
 
 mkdir build && cd build
-# toollcain_file的地址需要精准 
 cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
 
 make
+
 
 adb push fuzz /data/local/tmp
 adb push ../afl.js ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp

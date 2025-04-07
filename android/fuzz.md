@@ -1,0 +1,1 @@
+../android-ndk-r25c/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android26-clang  -o server server.c ./lib/vm.c -I ./lib -L ./lib -Wall -O3 -ldl -Wl,--export-dynamic,-rpath=/data/local/tmp -w
