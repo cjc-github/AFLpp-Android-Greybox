@@ -9,6 +9,10 @@
 extern jobject Java_qb_blogfuzz_NativeHelper_fuzzMeArray(JNIEnv *, jclass,
                                                          jbyteArray);
 
+JavaVM *vm = NULL;
+JNIEnv *env = NULL;
+
+
 /* Java context */
 static JavaCTX ctx;
 
@@ -30,7 +34,7 @@ int main(void) {
   ssize_t rlength = fread((void *)buffer, 1, BUFFER_SIZE, stdin);
   if (rlength == -1) return errno;
 
-  if ((status = init_java_env(&ctx, NULL, 0)) != 0) {
+  if ((status = init_java_env(&ctx, &env, 0)) != 0) {
     return status;
   }
 

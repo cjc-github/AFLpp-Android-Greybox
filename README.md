@@ -331,6 +331,17 @@ adb push libjenv.so /data/local/tmp
 
 
 
+
+
+注意：如果是x86架构的话，jenv需要进行修改，因为在下面的Fuzz过程中，使用adb logcat查看命令时，会出现下面的问题
+
+```
+04-08 09:23:26.844  7006  7006 V jenv    : [+] Initialize Java environment
+04-08 09:23:26.844  7006  7006 E jenv    : [!] undefined symbol: JniInvocationCreate
+```
+
+这意味着代码在x86架构中是存在问题的。
+
 ## 4.2 native
 
 ```bash
@@ -344,7 +355,8 @@ cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/
 make
 
 adb push fuzz /data/local/tmp
-adb push ../afl.js ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp
+adb push ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp/
+adb push ../afl_x86.js /data/local/tmp/afl.js
 
 # 验证
 adb shell
@@ -352,19 +364,23 @@ cd /data/local/tmp
 dd if=/dev/urandom of=in/sample.bin bs=1 count=16
 ./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
 
-# 如果运行不起来，则将afl.rs文件删除，重试
 ```
+
+运行截图：
+
+![image-20250407174625372](README.assets/image-20250407174625372.png)
 
 
 
 ## 4.3 slinked_jni
 
 ```bash
+# 步骤1: 移动相关信息到待编译库中
 cd slinked_jni
 cp ../apk/qb.blogfuzz/lib/x86_64/libblogfuzz.so ./lib/
 cp ../jenv/build/libjenv.so ./lib/
 
-
+# 步骤２: 编译并构建fuzz
 mkdir build && cd build
 
 # toollcain_file的地址需要精准
@@ -372,8 +388,19 @@ cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/
 
 make
 
+# 步骤３:移植
+cd ../
+javac Wrapper.java
+/home/test/Android/Sdk/build-tools/29.0.2/d8 Wrapper.class
+mv classes.dex mock.dex
+
+
+# 移植
+cd build
+adb push ../mock.dex /data/local/tmp
 adb push fuzz /data/local/tmp
-adb push ../afl.js ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp
+adb push ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp
+adb push ../afl_x86.js /data/local/tmp/afl.js
 
 # 验证
 adb shell
@@ -381,10 +408,14 @@ cd /data/local/tmp
 dd if=/dev/urandom of=in/sample.bin bs=1 count=16
 ./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
 
-# 如果运行不起来，则将afl.rs文件删除，重试
+# 如果报错，可以考虑下面的语句
+AFL_NO_FORKSRV=1 ./afl-fuzz -i in -o out -O -G 256 -- ./fuzz
+
 ```
 
+运行截图：
 
+![image-20250408084651326](README.assets/image-20250408084651326.png)
 
 
 
@@ -402,28 +433,18 @@ make
 
 
 adb push fuzz /data/local/tmp
-adb push ../afl.js ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp
+adb push ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp
+adb push ../afl_x86.js /data/local/tmp/afl.js
 
 # 验证
 adb shell
 cd /data/local/tmp
-./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
+AFL_DEBUG=1 AFL_NO_FORKSRV=1 ./afl-fuzz -i in -o out -O -G　256 -t 1000+ -- ./fuzz
 
 # 如果运行不起来，则将afl.rs文件删除，重试
 ```
 
+运行截图：
 
-
-
-
-测试
-
-```
-
-
-cmake -DANDROID_PLATFORM=31 -DCMAKE_TOOLCHAIN_FILE=/home/test/TCL/AFLpp-Android-Greybox/android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
-
-
-/home/test/TCL/AFLpp-Android-Greybox/android-ndk-r25c
-```
+![image-20250408084802251](README.assets/image-20250408084802251.png)
 
