@@ -2,8 +2,8 @@ Afl.print(`[*] Starting FRIDA config for PID: ${Process.id}`);
 
 /* Modules to be instrumented by Frida */
 const MODULE_WHITELIST = [
-  "/data/local/tmp/fuzz",
-  "/data/local/tmp/libblogfuzz.so",
+  "harness",
+  "libtest_demo.so",
 ];
 
 /* Persistent hook */
@@ -30,10 +30,11 @@ const hook_module = new CModule(`
 const pPersistentAddr = DebugSymbol.fromName("fuzz_one_input").address;
 
 /* Exclude from instrumentation */
+Afl.print("[*] Excluding modules from instrumentation");
 Module.load("libandroid_runtime.so");
 new ModuleMap().values().forEach(m => {
   if (!MODULE_WHITELIST.includes(m.name)) {
-    Afl.print(`Exclude: ${m.base}-${m.base.add(m.size)} ${m.name}`);
+    // Afl.print(`Exclude: ${m.base}-${m.base.add(m.size)} ${m.name}`);
     Afl.addExcludedRange(m.base, m.size);
   }
 });
@@ -41,7 +42,7 @@ new ModuleMap().values().forEach(m => {
 Afl.setEntryPoint(pPersistentAddr);
 Afl.setPersistentHook(hook_module.afl_persistent_hook);
 Afl.setPersistentAddress(pPersistentAddr);
-Afl.setPersistentCount(10000);
+Afl.setPersistentCount(10000000);
 Afl.setInMemoryFuzzing();
 Afl.setInstrumentLibraries();
 

@@ -27,10 +27,13 @@ unzip ndk.zip
 
 # 将cmakelist移动到afl++中
 # 如果是x86_64架构
+cp CMakeLists_x86_64.txt AFLplusplus-4.06c/CMakeLists.txt
+# 如果是x86架构
 cp CMakeLists_x86.txt AFLplusplus-4.06c/CMakeLists.txt
-
-# 如果是arm64架构
+# 如果是arm32架构
 cp CMakeLists_arm.txt AFLplusplus-4.06c/CMakeLists.txt
+# 如果是arm64架构
+cp CMakeLists_arm64.txt AFLplusplus-4.06c/CMakeLists.txt
 ```
 
 
@@ -43,10 +46,14 @@ mkdir build
 cd build
 
 # 注意，android-ndk-r25c的地址
-# 如果是arm架构
+# 如果是arm64架构
 cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a ..
+# 如果是arm架构
+cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=armeabi-v7a ..
 # 如果是x86_64架构
 cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
+# 如果是x86架构
+cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86 ..
 
 # 然后构建
 make
@@ -267,7 +274,7 @@ LD_PRELOAD=./afl-frida-trace.so ./fuzz ./out/default/crashes/id***
 
 
 
-## 3.3 slinked_jni
+## 3.3 slinked_jni 强链接
 
 ```bash
 # 验证
@@ -290,7 +297,7 @@ cd /data/local/tmp
 
 
 
-## 3.4 wliked_jni
+## 3.4 wliked_jni 弱链接
 
 ```bash
 cd native
@@ -342,6 +349,16 @@ adb push libjenv.so /data/local/tmp
 
 这意味着代码在x86架构中是存在问题的。
 
+
+
+
+
+注意： 在虚拟机Pixel 6 API 31上面没有触发这个问题，正常运行。
+
+
+
+
+
 ## 4.2 native
 
 ```bash
@@ -356,11 +373,13 @@ make
 
 adb push fuzz /data/local/tmp
 adb push ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp/
-adb push ../afl_x86.js /data/local/tmp/afl.js
+# 此时不需要afl_x86.js
+#　adb push ../afl_x86.js /data/local/tmp/afl.js
 
 # 验证
 adb shell
 cd /data/local/tmp
+mkdir in
 dd if=/dev/urandom of=in/sample.bin bs=1 count=16
 ./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
 
@@ -372,7 +391,7 @@ dd if=/dev/urandom of=in/sample.bin bs=1 count=16
 
 
 
-## 4.3 slinked_jni
+## 4.3 slinked_jni 强链接
 
 ```bash
 # 步骤1: 移动相关信息到待编译库中
@@ -415,11 +434,11 @@ AFL_NO_FORKSRV=1 ./afl-fuzz -i in -o out -O -G 256 -- ./fuzz
 
 运行截图：
 
-![image-20250408084651326](README.assets/image-20250408084651326.png)
+![image-20250409151357416](README.assets/image-20250409151357416.png)
 
 
 
-## 4.4 wlinked_jni
+## 4.4 wlinked_jni 弱链接
 
 ```bash
 cd wlinked_jni
@@ -447,4 +466,102 @@ AFL_DEBUG=1 AFL_NO_FORKSRV=1 ./afl-fuzz -i in -o out -O -G　256 -t 1000+ -- ./f
 运行截图：
 
 ![image-20250408084802251](README.assets/image-20250408084802251.png)
+
+
+
+复现命令
+
+```sh
+adb shell
+cd /data/local/tmp
+cat in/1 | LD_PRELOAD=./afl-frida-trace.so ./fuzz
+```
+
+
+
+
+
+# 五、疑问
+
+## 5.1
+
+使用andorid-fuzzing时，如果不使用`AFL_NO_FORKSRV=1`的话，程序运行不起来，使用`AFL_DEBUG=1`，`AFL_DEBUG_CHILD=1`，`AFL_
+
+
+
+AFL++ Frida持久模式的修复
+
+```
+参考文献：
+https://github.com/AFLplusplus/AFLplusplus/commit/1369cf7176c552286eb8c12de70cf3bbdddc4981
+```
+
+相关参考
+
+https://github.com/AFLplusplus/AFLplusplus/issues/2298
+
+里面提及Afl.setInstrumentNoDynamicLoad()
+
+
+
+
+
+## 5.2 
+
+如果崩溃触发的太慢的话，可以考虑将崩溃种子作为输入。
+
+
+
+## 5.3 Android各个版本测试
+
+Android Fuzz支持情况
+
+```shell
+adb shell getprop ro.build.version.release
+```
+
+
+
+前提准备
+
+```
+cd /home/test/TCL/AFLpp-Android-Greybox/AFLplusplus-4.06c/build
+adb push afl-frida-trace.so afl-fuzz /data/local/tmp/
+```
+
+
+
+
+
+表格如下：
+
+| Android API      | x86_64                 | x86  | arm32 | arm64 |
+| ---------------- | ---------------------- | ---- | ----- | ----- |
+| 22 Android 5.1   |                        |      |       |       |
+| 23 Android 6.0   |                        |      |       |       |
+| 24 Anroid  7.0   |                        |      |       |       |
+| 25 Android 7.1.1 |                        |      |       |       |
+| 26 Android 8.0   |                        |      |       |       |
+| 27 Android 8.1   |                        |      |       |       |
+| 28 Android 9.0   | AFL_NO_FORKSRV=1 Frida |      |       |       |
+| 29 Android10.0   |                        |      |       |       |
+| 30 Android 11.0  |                        |      |       |       |
+| 31 Android 12.0  | Frida                  |      |       |       |
+| 32 Android 12L   |                        |      |       |       |
+| 33 Android 13.0  |                        |      |       |       |
+| 34 Android 14    |                        |      |       |       |
+| 35 Android 15    |                        |      |       |       |
+
+
+
+
+
+
+
+```
+
+
+```
+
+
 

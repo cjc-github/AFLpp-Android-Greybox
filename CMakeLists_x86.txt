@@ -63,7 +63,7 @@ message("Frida version is set to: ${FRIDA_VERSION}")
 set(FRIDA_REPO_URL "https://github.com/frida/frida/releases/download")
 set(
     FRIDA_GDK_TARBALL
-    "frida-gumjs-devkit-${FRIDA_VERSION}-android-x86_64.tar.xz"
+    "frida-gumjs-devkit-${FRIDA_VERSION}-android-x86.tar.xz"
 )
 set(FRIDA_GDK_URL "${FRIDA_REPO_URL}/${FRIDA_VERSION}/${FRIDA_GDK_TARBALL}")
 set(FRIDA_DIR "${CMAKE_BINARY_DIR}/frida-${FRIDA_VERSION}")

@@ -9,8 +9,8 @@ typedef jint(*JNI_CreateJavaVM_t)(JavaVM **p_vm, JNIEnv **p_env, void *vm_args);
 
 int init_java_env(JavaCTX *ctx, char **jvm_options, uint8_t jvm_nb_options) {
   JNI_CreateJavaVM_t JNI_CreateJVM;
-  // JniInvocationImpl* (*JniInvocationCreate)();
-  // bool (*JniInvocationInit)(JniInvocationImpl*, const char*);
+  JniInvocationImpl* (*JniInvocationCreate)();
+  bool (*JniInvocationInit)(JniInvocationImpl*, const char*);
   jint (*registerFrameworkNatives)(JNIEnv*);
   void* runtime_dso;
 
@@ -23,15 +23,15 @@ int init_java_env(JavaCTX *ctx, char **jvm_options, uint8_t jvm_nb_options) {
   
   ALOGV("[+] 24");
 
-  // if ((JniInvocationCreate = dlsym(runtime_dso, "JniInvocationCreate")) == NULL) {
-  //   ALOGE("[!] %s\n", dlerror());
-  //   return JNI_ERR;
-  // }
+  if ((JniInvocationCreate = dlsym(runtime_dso, "JniInvocationCreate")) == NULL) {
+    ALOGE("[!] %s\n", dlerror());
+    return JNI_ERR;
+  }
 
-  // if ((JniInvocationInit = dlsym(runtime_dso, "JniInvocationInit")) == NULL) {
-  //   ALOGE("[!] %s\n", dlerror());
-  //   return JNI_ERR;
-  // }
+  if ((JniInvocationInit = dlsym(runtime_dso, "JniInvocationInit")) == NULL) {
+    ALOGE("[!] %s\n", dlerror());
+    return JNI_ERR;
+  }
 
   if ((JNI_CreateJVM = (JNI_CreateJavaVM_t) dlsym(runtime_dso, "JNI_CreateJavaVM")) == NULL) {
     ALOGE("[!] %s\n", dlerror());
@@ -47,8 +47,8 @@ int init_java_env(JavaCTX *ctx, char **jvm_options, uint8_t jvm_nb_options) {
   
   ALOGV("[+] 48");
 
-  // ctx->invoc = JniInvocationCreate();
-  // JniInvocationInit(ctx->invoc, ANDROID_RUNTIME_DSO);
+  ctx->invoc = JniInvocationCreate();
+  JniInvocationInit(ctx->invoc, ANDROID_RUNTIME_DSO);
 
   JavaVMOption options[jvm_nb_options];
 
