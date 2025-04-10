@@ -5,6 +5,8 @@ android-ndk-r25c/
 4.06c.zip
 ndk.zip
 
+# git rm -r --cached apk_out_origin/
+
 android/app-debug-zip/
 fuzzgoat/fuzzgoat
 fuzzgoat/fuzzgoat_ASAN
