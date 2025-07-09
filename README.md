@@ -409,7 +409,9 @@ make
 
 # 步骤３:移植
 cd ../
+# java版本1.8.0_301
 javac Wrapper.java
+# dm版本29.0.2
 /home/test/Android/Sdk/build-tools/29.0.2/d8 Wrapper.class
 mv classes.dex mock.dex
 
@@ -535,22 +537,22 @@ adb push afl-frida-trace.so afl-fuzz /data/local/tmp/
 
 表格如下：
 
-| Android API      | x86_64                 | x86  | arm32 | arm64 |
-| ---------------- | ---------------------- | ---- | ----- | ----- |
-| 22 Android 5.1   |                        |      |       |       |
-| 23 Android 6.0   |                        |      |       |       |
-| 24 Anroid  7.0   |                        |      |       |       |
-| 25 Android 7.1.1 |                        |      |       |       |
-| 26 Android 8.0   |                        |      |       |       |
-| 27 Android 8.1   |                        |      |       |       |
-| 28 Android 9.0   | AFL_NO_FORKSRV=1 Frida |      |       |       |
-| 29 Android10.0   |                        |      |       |       |
-| 30 Android 11.0  |                        |      |       |       |
-| 31 Android 12.0  | Frida                  |      |       |       |
-| 32 Android 12L   |                        |      |       |       |
-| 33 Android 13.0  |                        |      |       |       |
-| 34 Android 14    |                        |      |       |       |
-| 35 Android 15    |                        |      |       |       |
+| Android API      | x86_64                 | x86 | arm32 | arm64 |
+| ---------------- | ---------------------- | --- | ----- | ----- |
+| 22 Android 5.1   |                        |     |       |       |
+| 23 Android 6.0   |                        |     |       |       |
+| 24 Anroid  7.0   |                        |     |       |       |
+| 25 Android 7.1.1 |                        |     |       |       |
+| 26 Android 8.0   |                        |     |       |       |
+| 27 Android 8.1   |                        |     |       |       |
+| 28 Android 9.0   | AFL_NO_FORKSRV=1 Frida |     |       |       |
+| 29 Android10.0   |                        |     |       |       |
+| 30 Android 11.0  |                        |     |       |       |
+| 31 Android 12.0  | Frida                  |     |       |       |
+| 32 Android 12L   |                        |     |       |       |
+| 33 Android 13.0  |                        |     |       |       |
+| 34 Android 14    |                        |     |       |       |
+| 35 Android 15    |                        |     |       |       |
 
 
 
