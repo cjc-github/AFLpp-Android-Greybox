@@ -2,8 +2,8 @@ Afl.print(`[*] Starting FRIDA config for PID: ${Process.id}`);
 
 /* Modules to be instrumented by Frida */
 const MODULE_WHITELIST = [
-  "harness",
-  "libtest_demo.so",
+  "fuzz",
+  "libblogfuzz.so",
 ];
 
 /* Persistent hook */

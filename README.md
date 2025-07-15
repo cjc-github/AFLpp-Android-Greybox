@@ -456,7 +456,7 @@ cat in/crash | ./fuzz
 ./afl-fuzz -i in -o out -n -- ./fuzz
 
 # debug方法，这个流程必须不能报错
-cat in/1 | LD_PRELOAD=./afl-frida-trace.so ./fuzz
+cat in/sample.bin | LD_PRELOAD=./afl-frida-trace.so ./fuzz
 
 # 运行灰盒模糊测试
 ./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
@@ -477,12 +477,13 @@ cd wlinked_jni
 cp ../apk/qb.blogfuzz/lib/x86_64/libblogfuzz.so ./lib/
 cp ../jenv/build/libjenv.so ./lib/
 
-mkdir build && cd build
+# 编译
+rm -rf build && mkdir build && cd build
 cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
 
 make
 
-
+# 移动到Android设备
 adb push fuzz /data/local/tmp
 adb push ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp
 adb push ../afl_x86.js /data/local/tmp/afl.js
@@ -490,36 +491,49 @@ adb push ../afl_x86.js /data/local/tmp/afl.js
 # 验证
 adb shell
 cd /data/local/tmp
-AFL_DEBUG=1 AFL_NO_FORKSRV=1 ./afl-fuzz -i in -o out -O -G　256 -t 1000+ -- ./fuzz
+mkdir in
+dd if=/dev/urandom of=in/sample.bin bs=1 count=16
 
-# 如果运行不起来，则将afl.rs文件删除，重试
+# 放一个漏洞进去
+echo "Quarksl4bfuzzMe!" > in/crash
+
+# 验证是否触发漏洞
+# 方法1:
+cat in/crash | ./fuzz
+# 方法2:
+./afl-fuzz -i in -o out -n -- ./fuzz
+
+# debug方法，这个流程必须不能报错
+
+./afl-fuzz -i in -o out -O -G　256 -t 1000+ -- ./fuzz
 ```
 
 运行截图：
 
-![image-20250408084802251](README.assets/image-20250408084802251.png)
+![image-20250715151810361](README.assets/image-20250715151810361.png)
 
 
 
-复现命令
-
-```sh
-adb shell
-cd /data/local/tmp
-cat in/1 | LD_PRELOAD=./afl-frida-trace.so ./fuzz
-```
+# 五、统计
 
 
 
+## 5.1 统计
 
 
-# 五、疑问
 
-## 5.1
+|                                                              | 原始      | x86_64    | arm64 |
+| ------------------------------------------------------------ | --------- | --------- | ----- |
+| **Standard native function**                                 | ~10k/sec  | 1108/sec  |       |
+| **Weakly linked JNI function**                               | ~9k/sec   | 131.2/sec |       |
+| **Strongly linked JNI function**                             | ~5k/sec   | 135.0/sec |       |
+| **Strongly linked JNI function (with Java hook)**, 修改afl.js | ~3.5k/sec |           |       |
 
-使用andorid-fuzzing时，如果不使用`AFL_NO_FORKSRV=1`的话，程序运行不起来，使用`AFL_DEBUG=1`，`AFL_DEBUG_CHILD=1`，`AFL_
+ 
 
+## 5.2 疑问：
 
+### 问题1：
 
 AFL++ Frida持久模式的修复
 
@@ -534,13 +548,15 @@ https://github.com/AFLplusplus/AFLplusplus/issues/2298
 
 里面提及Afl.setInstrumentNoDynamicLoad()
 
-
-
-
-
-## 5.2 
+### 问题2：
 
 如果崩溃触发的太慢的话，可以考虑将崩溃种子作为输入。
+
+
+
+### 问题3：
+
+常见的查错办法: `AFL_NO_FORKSRV=1` ，``AFL_DEBUG=1`，`AFL_DEBUG_CHILD=1`等。
 
 
 
@@ -561,39 +577,6 @@ cd /home/test/TCL/AFLpp-Android-Greybox/AFLplusplus-4.06c/build
 adb push afl-frida-trace.so afl-fuzz /data/local/tmp/
 ```
 
-
-
-
-
-表格如下：
-
-| Android API      | x86_64                 | x86 | arm32 | arm64 |
-| ---------------- | ---------------------- | --- | ----- | ----- |
-| 22 Android 5.1   |                        |     |       |       |
-| 23 Android 6.0   |                        |     |       |       |
-| 24 Anroid  7.0   |                        |     |       |       |
-| 25 Android 7.1.1 |                        |     |       |       |
-| 26 Android 8.0   |                        |     |       |       |
-| 27 Android 8.1   |                        |     |       |       |
-| 28 Android 9.0   | AFL_NO_FORKSRV=1 Frida |     |       |       |
-| 29 Android10.0   |                        |     |       |       |
-| 30 Android 11.0  |                        |     |       |       |
-| 31 Android 12.0  | Frida                  |     |       |       |
-| 32 Android 12L   |                        |     |       |       |
-| 33 Android 13.0  |                        |     |       |       |
-| 34 Android 14    |                        |     |       |       |
-| 35 Android 15    |                        |     |       |       |
-
-
-
-
-
-
-
-```
-
-
-```
 
 
 
