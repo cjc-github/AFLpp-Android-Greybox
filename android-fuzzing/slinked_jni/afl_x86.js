@@ -34,7 +34,7 @@ const pPersistentAddr = DebugSymbol.fromName("fuzz_one_input").address;
 Module.load("libandroid_runtime.so");
 // add library
 // Module.load("libart.so");
-Module.load("libblogfuzz.so");
+// Module.load("libblogfuzz.so");
 new ModuleMap().values().forEach(m => {
   if (!MODULE_WHITELIST.includes(m.name)) {
     Afl.print(`Exclude: ${m.base}-${m.base.add(m.size)} ${m.name}`);

@@ -42,7 +42,7 @@ new ModuleMap().values().forEach(m => {
 Afl.setEntryPoint(pPersistentAddr);
 Afl.setPersistentHook(hook_module.afl_persistent_hook);
 Afl.setPersistentAddress(pPersistentAddr);
-Afl.setPersistentCount(10000000);
+Afl.setPersistentCount(10000);
 Afl.setInMemoryFuzzing();
 Afl.setInstrumentLibraries();
 

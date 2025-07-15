@@ -380,6 +380,7 @@ adb push ../afl_x86.js /data/local/tmp/afl.js
 
 # 验证
 adb shell
+su
 cd /data/local/tmp
 mkdir in
 dd if=/dev/urandom of=in/sample.bin bs=1 count=16
@@ -407,6 +408,20 @@ cat in/crash | ./fuzz
 如果把漏洞放进入或者跑出了漏洞，速度就极速下降了。从32.2k/sec -> 1108/sec
 
 ![image-20250715142731629](README.assets/image-20250715142731629.png)
+
+
+
+黑盒模糊测试
+
+```
+./afl-fuzz -i in -o out -n -- ./fuzz
+```
+
+运行截图如下：
+
+![image-20250715153855026](README.assets/image-20250715153855026.png)
+
+
 
 ## 4.3 slinked_jni 强链接
 
@@ -504,7 +519,6 @@ cat in/crash | ./fuzz
 ./afl-fuzz -i in -o out -n -- ./fuzz
 
 # debug方法，这个流程必须不能报错
-
 ./afl-fuzz -i in -o out -O -G　256 -t 1000+ -- ./fuzz
 ```
 
@@ -520,7 +534,7 @@ cat in/crash | ./fuzz
 
 ## 5.1 统计
 
-
+统计表
 
 |                                                              | 原始      | x86_64    | arm64 |
 | ------------------------------------------------------------ | --------- | --------- | ----- |
@@ -560,6 +574,12 @@ https://github.com/AFLplusplus/AFLplusplus/issues/2298
 
 
 
+### 问题4：
+
+如果遇见当前终端无法触发该漏洞的情况，可能是共享内存啥导致的，退出终端，新开一个。或者进去退出su。
+
+
+
 ## 5.3 Android各个版本测试
 
 Android Fuzz支持情况
@@ -576,7 +596,6 @@ adb shell getprop ro.build.version.release
 cd /home/test/TCL/AFLpp-Android-Greybox/AFLplusplus-4.06c/build
 adb push afl-frida-trace.so afl-fuzz /data/local/tmp/
 ```
-
 
 
 
