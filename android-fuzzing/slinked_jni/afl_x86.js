@@ -2,8 +2,9 @@ Afl.print(`[*] Starting FRIDA config for PID: ${Process.id}`);
 
 /* Modules to be instrumented by Frida */
 const MODULE_WHITELIST = [
-  "/data/local/tmp/fuzz",
-  "/data/local/tmp/libblogfuzz.so",
+  // 不要加路径
+  "fuzz",
+  "libblogfuzz.so",
 ];
 
 /* Persistent hook */
@@ -31,6 +32,9 @@ const pPersistentAddr = DebugSymbol.fromName("fuzz_one_input").address;
 
 /* Exclude from instrumentation */
 Module.load("libandroid_runtime.so");
+// add library
+// Module.load("libart.so");
+Module.load("libblogfuzz.so");
 new ModuleMap().values().forEach(m => {
   if (!MODULE_WHITELIST.includes(m.name)) {
     Afl.print(`Exclude: ${m.base}-${m.base.add(m.size)} ${m.name}`);

@@ -18,6 +18,7 @@ void fuzz_one_input(const uint8_t *buf, int len)
   // 增加log信息调试
   LOGI("[+] fuzz_one_input called");
   _Z6fuzzMePKai(buf, len);
+  LOGI("[+] Finish fuzz_one_input called");
 }
 
 int main(void)

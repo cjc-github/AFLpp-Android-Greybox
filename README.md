@@ -417,7 +417,7 @@ cp ../apk/qb.blogfuzz/lib/x86_64/libblogfuzz.so ./lib/
 cp ../jenv/build/libjenv.so ./lib/
 
 # 步骤２: 编译并构建fuzz
-mkdir build && cd build
+rm -rf build && mkdir build && cd build
 
 # toollcain_file的地址需要精准
 cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
@@ -443,17 +443,30 @@ adb push ../afl_x86.js /data/local/tmp/afl.js
 # 验证
 adb shell
 cd /data/local/tmp
+mkdir in
 dd if=/dev/urandom of=in/sample.bin bs=1 count=16
+
+# 放一个漏洞进去
+echo "Quarksl4bfuzzMe!" > in/crash
+
+# 验证是否触发漏洞
+# 方法1:
+cat in/crash | ./fuzz
+# 方法2:
+./afl-fuzz -i in -o out -n -- ./fuzz
+
+# debug方法，这个流程必须不能报错
+cat in/1 | LD_PRELOAD=./afl-frida-trace.so ./fuzz
+
+# 运行灰盒模糊测试
 ./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
-
-# 如果报错，可以考虑下面的语句
-AFL_NO_FORKSRV=1 ./afl-fuzz -i in -o out -O -G 256 -- ./fuzz
-
 ```
 
 运行截图：
 
-![image-20250409151357416](README.assets/image-20250409151357416.png)
+这个有没有漏洞，速度都一样了。
+
+![image-20250715150558599](README.assets/image-20250715150558599.png)
 
 
 
