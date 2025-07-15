@@ -327,7 +327,7 @@ cd /data/local/tmp
 
 ```bash
 cd jenv
-mkdir build && cd build
+rm -rf build && mkdir build && cd build
 cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
 make
 
@@ -364,7 +364,7 @@ adb push libjenv.so /data/local/tmp
 ```bash
 cd native
 cp ../apk/qb.blogfuzz/lib/x86_64/libblogfuzz.so ./lib/
-mkdir build && cd build
+rm -rf build && mkdir build && cd build
 
 # toollcain_file的地址需要精准
 cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
@@ -372,24 +372,41 @@ cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/
 make
 
 adb push fuzz /data/local/tmp
-adb push ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp/
-# 此时不需要afl_x86.js
-#　adb push ../afl_x86.js /data/local/tmp/afl.js
+adb push ../lib/libblogfuzz.so /data/local/tmp/
+# 将4.1生成的libjenv.so复制到Android设备中
+adb push ../../jenv/build/libjenv.so /data/local/tmp
+# afl插桩文件
+adb push ../afl_x86.js /data/local/tmp/afl.js
 
 # 验证
 adb shell
 cd /data/local/tmp
 mkdir in
 dd if=/dev/urandom of=in/sample.bin bs=1 count=16
+# 放一个漏洞进去
+echo "Quarksl4bfuzzMe!" > in/crash
+
+# 验证是否触发漏洞
+# 方法1:
+cat in/crash | ./fuzz
+# 方法2:
+./afl-fuzz -i in -o out -n -- ./fuzz
+
+
+# 运行灰盒模糊测试
 ./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
 
 ```
 
 运行截图：
 
-![image-20250407174625372](README.assets/image-20250407174625372.png)
+没有把crash放入时的截图：
 
+![image-20250715143426464](README.assets/image-20250715143426464.png)
 
+如果把漏洞放进入或者跑出了漏洞，速度就极速下降了。从32.2k/sec -> 1108/sec
+
+![image-20250715142731629](README.assets/image-20250715142731629.png)
 
 ## 4.3 slinked_jni 强链接
 
