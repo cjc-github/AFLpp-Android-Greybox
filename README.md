@@ -18,8 +18,8 @@ apt install cmake curl unzip xxd git
 
 ```bash
 #　下载aflplusplus项目
-curl https://codeload.github.com/AFLplusplus/AFLplusplus/zip/refs/tags/4.06c --output 4.06c.zip
-unzip 4.06c.zip
+curl https://codeload.github.com/AFLplusplus/AFLplusplus/zip/refs/tags/v4.20c --output 4.20c.zip
+unzip 4.20c.zip
 
 # 下载ndk
 curl https://dl.google.com/android/repository/android-ndk-r25c-linux.zip --output ndk.zip
@@ -27,23 +27,42 @@ unzip ndk.zip
 
 # 将cmakelist移动到afl++中
 # 如果是x86_64架构
-cp CMakeLists_x86_64.txt AFLplusplus-4.06c/CMakeLists.txt
+cp CMakeLists_x86_64.txt AFLplusplus-4.20c/CMakeLists.txt
 # 如果是x86架构
-cp CMakeLists_x86.txt AFLplusplus-4.06c/CMakeLists.txt
+cp CMakeLists_x86.txt AFLplusplus-4.20c/CMakeLists.txt
 # 如果是arm32架构
-cp CMakeLists_arm.txt AFLplusplus-4.06c/CMakeLists.txt
+cp CMakeLists_arm.txt AFLplusplus-4.20c/CMakeLists.txt
 # 如果是arm64架构
-cp CMakeLists_arm64.txt AFLplusplus-4.06c/CMakeLists.txt
+cp CMakeLists_arm64.txt AFLplusplus-4.20c/CMakeLists.txt
 ```
+
+
+
+注意：如果想要更改frida的版本的话，修改CMakeLists.txt文件中的
+
+```
+if (NOT FRIDA_VERSION)
+    set(FRIDA_VERSION "16.6.6")
+endif()
+
+测试环境为:
+AFLplusplus-4.20c
+frida 16.0.13
+```
+
+
+
+注意：
+
+<font style=“color=red">使用afl++其他版本可能会导致出现崩溃后，速度回不去了。</font>
 
 
 
 ## 1.3 构建
 
 ```bash
-cd AFLplusplus-4.06c/
-mkdir build
-cd build
+cd AFLplusplus-4.20c/
+rm -rf build && mkdir build && cd build
 
 # 注意，android-ndk-r25c的地址
 # 如果是arm64架构
@@ -219,7 +238,7 @@ cd /data/local/tmp
 
 ```bash
 cd jenv
-mkdir build && cd build
+rm -rf build && mkdir build && cd build
 # toollcain_file的地址需要精准
 cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a ..
 make
@@ -236,8 +255,9 @@ adb push libjenv.so /data/local/tmp
 ```bash
 cd native
 cp ../apk/qb.blogfuzz/lib/arm64-v8a/libblogfuzz.so ./lib/
+cp ../jenv/build/libjenv.so ./lib/
 
-mkdir build && cd build
+rm -rf build && mkdir build && cd build
 
 # toollcain_file的地址需要精准
 cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a ..
@@ -247,7 +267,7 @@ make
 adb push fuzz /data/local/tmp
 adb push ../lib/libblogfuzz.so /data/local/tmp
 # 不考虑afl.js文件
-# adb push ../afl.js /data/local/tmp
+adb push ../afl.js /data/local/tmp
 
 # 验证
 adb shell
@@ -255,12 +275,16 @@ cd /data/local/tmp
 rm -rf in out
 mkdir in
 dd if=/dev/urandom of=in/sample.bin bs=1 count=16
+# 放一个漏洞进去
+echo "Quarksl4bfuzzMe!" > in/crash
+
+# 运行灰盒模糊测试
 ./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
 ```
 
 运行截图：
 
-![image-20250319172116752](README.assets/image-20250319172116752.png)
+![image-20250715172547853](README.assets/image-20250715172547853.png)
 
 验证:
 
@@ -277,45 +301,98 @@ LD_PRELOAD=./afl-frida-trace.so ./fuzz ./out/default/crashes/id***
 ## 3.3 slinked_jni 强链接
 
 ```bash
-# 验证
-adb shell
-cd /data/local/tmp
-./afl-fuzz -i in -o out -O -G　256 -- ./fuzzcd native
-mkdir build && cd build
+cd slinked_jni/
+
+cp ../jenv/build/libjenv.so ./lib/
+cp ../apk/qb.blogfuzz/lib/arm64-v8a/libblogfuzz.so ./lib/
+
+rm -rf build && mkdir build && cd build
 # toollcain_file的地址需要精准
 cmake -DANDROID_PLATFORM=26 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a ..
 make
 
+# 步骤３:移植
+cd ../
+# java版本1.8.0_301
+javac Wrapper.java
+# dm版本29.0.2
+/home/test/Android/Sdk/build-tools/29.0.2/d8 Wrapper.class
+mv classes.dex mock.dex
+
+cd build
+adb push ../mock.dex /data/local/tmp
 adb push fuzz /data/local/tmp
 adb push ../afl.js ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp
 
 # 验证
 adb shell
 cd /data/local/tmp
-./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
+mkdir in
+dd if=/dev/urandom of=in/sample.bin bs=1 count=16
+
+# 放一个漏洞进去
+echo "Quarksl4bfuzzMe!" > in/crash
+
+# 验证是否触发漏洞
+# 方法1:
+cat in/crash | ./fuzz
+# 方法2:
+./afl-fuzz -i in -o out -n -- ./fuzz
+
+# debug方法，这个流程必须不能报错
+cat in/sample.bin | LD_PRELOAD=./afl-frida-trace.so ./fuzz
+
+# 这里加上超时选项
+./afl-fuzz -i in -o out -O -G　256 -t 10000+ -- ./fuzz
 ```
+
+运行截图：
+
+![image-20250715174659386](README.assets/image-20250715174659386.png)
 
 
 
 ## 3.4 wliked_jni 弱链接
 
 ```bash
-cd native
-mkdir build && cd build
+cd wlinked_jni/
+
+cp ../apk/qb.blogfuzz/lib/arm64-v8a/libblogfuzz.so ./lib/
+cp ../jenv/build/libjenv.so ./lib/
+
+rm -rf build && mkdir build && cd build
 # toollcain_file的地址需要精准 
-cmake -DANDROID_PLATFORM=31 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 ..
+cmake -DANDROID_PLATFORM=31 -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r25c/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a ..
 
 make
+
+# 移植
 adb push fuzz /data/local/tmp
-adb push ../lib/libblogfuzz.so /data/local/tmp
-# 不考虑afl.js文件
-#　adb push ../afl.js /data/local/tmp
+adb push ../lib/libblogfuzz.so ../lib/libjenv.so /data/local/tmp
+adb push ../afl.js /data/local/tmp/afl.js
 
 # 验证
 adb shell
 cd /data/local/tmp
-./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
+mkdir in
+dd if=/dev/urandom of=in/sample.bin bs=1 count=16
+
+# 放一个漏洞进去
+echo "Quarksl4bfuzzMe!" > in/crash
+
+# 验证是否触发漏洞
+# 方法1:
+cat in/crash | ./fuzz
+# 方法2:
+./afl-fuzz -i in -o out -n -t 10000+ -- ./fuzz
+
+# 运行模糊测试
+./afl-fuzz -i in -o out -O -G　256 -t 10000+ -- ./fuzz
 ```
+
+运行截图：
+
+![image-20250715175722047](README.assets/image-20250715175722047.png)
 
 
 
@@ -519,6 +596,9 @@ cat in/crash | ./fuzz
 ./afl-fuzz -i in -o out -n -- ./fuzz
 
 # debug方法，这个流程必须不能报错
+cat in/sample.bin | LD_PRELOAD=./afl-frida-trace.so ./fuzz
+
+# 运行灰盒模糊测试
 ./afl-fuzz -i in -o out -O -G　256 -t 1000+ -- ./fuzz
 ```
 
@@ -536,12 +616,12 @@ cat in/crash | ./fuzz
 
 统计表
 
-|                                                              | 原始      | x86_64    | arm64 |
-| ------------------------------------------------------------ | --------- | --------- | ----- |
-| **Standard native function**                                 | ~10k/sec  | 1108/sec  |       |
-| **Weakly linked JNI function**                               | ~9k/sec   | 131.2/sec |       |
-| **Strongly linked JNI function**                             | ~5k/sec   | 135.0/sec |       |
-| **Strongly linked JNI function (with Java hook)**, 修改afl.js | ~3.5k/sec |           |       |
+|                                                              | 原始      | x86_64    | arm64     |
+| ------------------------------------------------------------ | --------- | --------- | --------- |
+| **Standard native function**                                 | ~10k/sec  | 1108/sec  | 78.8/sec  |
+| **Weakly linked JNI function**                               | ~9k/sec   | 131.2/sec | 1.65/sec  |
+| **Strongly linked JNI function**                             | ~5k/sec   | 135.0/sec | 21.26/sec |
+| **Strongly linked JNI function (with Java hook)**, 修改afl.js | ~3.5k/sec |           |           |
 
  
 
@@ -580,6 +660,12 @@ https://github.com/AFLplusplus/AFLplusplus/issues/2298
 
 
 
+### 问题5：
+
+正常来说，如果刚开启fuzz的速度很高，但是一出漏洞，速度直线下降，这意味着，afl-frida-trace.so的版本出问题了。这种情况下，需要对这个版本进行比对。
+
+
+
 ## 5.3 Android各个版本测试
 
 Android Fuzz支持情况
@@ -593,7 +679,7 @@ adb shell getprop ro.build.version.release
 前提准备
 
 ```
-cd /home/test/TCL/AFLpp-Android-Greybox/AFLplusplus-4.06c/build
+cd /home/test/TCL/AFLpp-Android-Greybox/AFLplusplus-4.20c/build
 adb push afl-frida-trace.so afl-fuzz /data/local/tmp/
 ```
 

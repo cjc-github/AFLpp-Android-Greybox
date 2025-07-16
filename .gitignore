@@ -5,6 +5,7 @@ AFLplusplus/
 android-ndk-r25c/
 4.06c.zip
 ndk.zip
+4.20c.zip
 
 # git rm -r --cached apk_out_origin/
 
@@ -16,15 +17,15 @@ fuzzgoat/fuzzgoat_ASAN
 android-fuzzing/apk/qb.blogfuzz/
 
 android-fuzzing/jenv/build
-android-fuzzing/jenv/lib
+android-fuzzing/jenv/lib/*
 
 android-fuzzing/native/build
-android-fuzzing/native/lib
+android-fuzzing/native/lib/*
 
 android-fuzzing/slinked_jni/build
-android-fuzzing/slinked_jni/lib
+android-fuzzing/slinked_jni/lib/*
 android-fuzzing/slinked_jni/Wrapper.class
 android-fuzzing/slinked_jni/mock.dex
 
 android-fuzzing/wlinked_jni/build
-android-fuzzing/wlinked_jni/lib
+android-fuzzing/wlinked_jni/lib/*
