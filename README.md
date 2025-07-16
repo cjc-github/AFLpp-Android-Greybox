@@ -46,8 +46,10 @@ if (NOT FRIDA_VERSION)
 endif()
 
 测试环境为:
-AFLplusplus-4.20c
+AFLplusplus-4.20c -> AFLplusplus-4.31c
 frida 16.0.13
+
+frida-trace.so使用4.20c生成，afl-fuzz使用4.31c
 ```
 
 
@@ -228,8 +230,6 @@ cd /data/local/tmp
 
 
 
-
-
 # 三、android fuzzing arm
 
 ## 3.1 jenv
@@ -279,12 +279,20 @@ dd if=/dev/urandom of=in/sample.bin bs=1 count=16
 echo "Quarksl4bfuzzMe!" > in/crash
 
 # 运行灰盒模糊测试
-./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
+./afl-fuzz -i in -o out -O -G 256 -- ./fuzz
 ```
 
 运行截图：
 
+
+
+4.31c的afl-frida-trace.so和afl-fuzz
+
 ![image-20250715172547853](README.assets/image-20250715172547853.png)
+
+4.20c的afl-frida-trace.so，4.31c的afl-fuzz
+
+![image-20250716174121776](README.assets/image-20250716174121776.png)
 
 验证:
 
@@ -343,14 +351,18 @@ cat in/crash | ./fuzz
 cat in/sample.bin | LD_PRELOAD=./afl-frida-trace.so ./fuzz
 
 # 这里加上超时选项
-./afl-fuzz -i in -o out -O -G　256 -t 10000+ -- ./fuzz
+./afl-fuzz -i in -o out -O -G 256 -t 10000+ -- ./fuzz
 ```
 
 运行截图：
 
+4.31c的afl-frida-trace.so和afl-fuzz
+
 ![image-20250715174659386](README.assets/image-20250715174659386.png)
 
+4.20c的afl-frida-trace.so，4.31c的afl-fuzz
 
+![image-20250716174905750](README.assets/image-20250716174905750.png)
 
 ## 3.4 wliked_jni 弱链接
 
@@ -387,12 +399,20 @@ cat in/crash | ./fuzz
 ./afl-fuzz -i in -o out -n -t 10000+ -- ./fuzz
 
 # 运行模糊测试
-./afl-fuzz -i in -o out -O -G　256 -t 10000+ -- ./fuzz
+./afl-fuzz -i in -o out -O -G 256 -t 10000+ -- ./fuzz
 ```
 
 运行截图：
 
+4.31c的afl-frida-trace.so和afl-fuzz
+
 ![image-20250715175722047](README.assets/image-20250715175722047.png)
+
+
+
+4.20c的afl-frida-trace.so，4.31c的afl-fuzz
+
+![image-20250716175809214](README.assets/image-20250716175809214.png)
 
 
 
