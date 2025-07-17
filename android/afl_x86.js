@@ -2,8 +2,8 @@ Afl.print(`[*] Starting FRIDA config for PID: ${Process.id}`);
 
 /* Modules to be instrumented by Frida */
 const MODULE_WHITELIST = [
-  "server",
-  "libtest_demo.so",
+    "server",
+    "libtest_demo.so",
 ];
 
 /* Persistent hook */
@@ -17,13 +17,13 @@ const hook_module = new CModule(`
     uint32_t input_buf_len) {
 
     uint32_t length = (input_buf_len > BUF_LEN) ? BUF_LEN : input_buf_len;
-    memcpy((void *)regs->x[0], input_buf, length);
-    regs->x[1] = length;
+    memcpy((void *)regs->rdi, input_buf, length);
+    regs->rsi = input_buf_len;
   }
   `,
-  {
-    memcpy: Module.getExportByName(null, "memcpy")
-  }
+    {
+        memcpy: Module.getExportByName(null, "memcpy")
+    }
 );
 
 /* Persistent loop start address */
@@ -33,10 +33,10 @@ const pPersistentAddr = DebugSymbol.fromName("fuzz_one_input").address;
 Afl.print("[*] Excluding modules from instrumentation");
 Module.load("libandroid_runtime.so");
 new ModuleMap().values().forEach(m => {
-  if (!MODULE_WHITELIST.includes(m.name)) {
-    Afl.print(`Exclude: ${m.base}-${m.base.add(m.size)} ${m.name}`);
-    Afl.addExcludedRange(m.base, m.size);
-  }
+    if (!MODULE_WHITELIST.includes(m.name)) {
+        Afl.print(`Exclude: ${m.base}-${m.base.add(m.size)} ${m.name}`);
+        Afl.addExcludedRange(m.base, m.size);
+    }
 });
 
 Afl.setEntryPoint(pPersistentAddr);

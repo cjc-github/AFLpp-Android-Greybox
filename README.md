@@ -176,12 +176,12 @@ cd android/
 adb push app-debug.apk /data/local/tmp/target-app.apk
 
 # 2. 移动so库
-unzip -d ./app-debug-zip app-debug.apk
+unzip -d ./app-debug app-debug.apk
 
 # x86_64架构
-adb push ./app-debug-zip/lib/x86_64/* /data/local/tmp
+adb push ./app-debug/lib/x86_64/* /data/local/tmp
 # arm架构
-adb push ./app-debug-zip/lib/arm64-v8a/* /data/local/tmp
+adb push ./app-debug/lib/arm64-v8a/* /data/local/tmp
 
 # 3. 构建驱动程序,并移动到设备中
 

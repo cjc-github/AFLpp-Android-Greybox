@@ -11,6 +11,8 @@ ndk.zip
 # git rm -r --cached apk_out_origin/
 
 android/app-debug-zip/
+android/app-debug/
+
 fuzzgoat/fuzzgoat
 fuzzgoat/fuzzgoat_ASAN
 
