@@ -492,7 +492,7 @@ cat in/crash | ./fuzz
 
 
 # 运行灰盒模糊测试
-./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
+./afl-fuzz -i in -o out -O -G 256 -- ./fuzz
 
 ```
 
@@ -505,6 +505,12 @@ cat in/crash | ./fuzz
 如果把漏洞放进入或者跑出了漏洞，速度就极速下降了。从32.2k/sec -> 1108/sec
 
 ![image-20250715142731629](README.assets/image-20250715142731629.png)
+
+
+
+afl++ v.31c afl-frida-trace.so 4.20c
+
+![image-20250717165335492](README.assets/image-20250717165335492.png)
 
 
 
@@ -571,7 +577,7 @@ cat in/crash | ./fuzz
 cat in/sample.bin | LD_PRELOAD=./afl-frida-trace.so ./fuzz
 
 # 运行灰盒模糊测试
-./afl-fuzz -i in -o out -O -G　256 -- ./fuzz
+./afl-fuzz -i in -o out -O -G 256 -- ./fuzz
 ```
 
 运行截图：
@@ -579,6 +585,12 @@ cat in/sample.bin | LD_PRELOAD=./afl-frida-trace.so ./fuzz
 这个有没有漏洞，速度都一样了。
 
 ![image-20250715150558599](README.assets/image-20250715150558599.png)
+
+
+
+afl++ v.31c afl-frida-trace.so 4.20c
+
+![image-20250717170123560](README.assets/image-20250717170123560.png)
 
 
 
@@ -619,12 +631,18 @@ cat in/crash | ./fuzz
 cat in/sample.bin | LD_PRELOAD=./afl-frida-trace.so ./fuzz
 
 # 运行灰盒模糊测试
-./afl-fuzz -i in -o out -O -G　256 -t 1000+ -- ./fuzz
+./afl-fuzz -i in -o out -O -G 256 -t 1000+ -- ./fuzz
 ```
 
 运行截图：
 
 ![image-20250715151810361](README.assets/image-20250715151810361.png)
+
+
+
+afl++ v.31c afl-frida-trace.so 4.20c
+
+![image-20250717170237365](README.assets/image-20250717170237365.png)
 
 
 
@@ -638,9 +656,9 @@ cat in/sample.bin | LD_PRELOAD=./afl-frida-trace.so ./fuzz
 
 |                                                              | 原始      | x86_64    | arm64     |
 | ------------------------------------------------------------ | --------- | --------- | --------- |
-| **Standard native function**                                 | ~10k/sec  | 1108/sec  | 78.8/sec  |
-| **Weakly linked JNI function**                               | ~9k/sec   | 131.2/sec | 1.65/sec  |
-| **Strongly linked JNI function**                             | ~5k/sec   | 135.0/sec | 21.26/sec |
+| **Standard native function**                                 | ~10k/sec  | 22.9k/sec | 78.8/sec  |
+| **Weakly linked JNI function**                               | ~9k/sec   | 16.2k/sec | 1.65/sec  |
+| **Strongly linked JNI function**                             | ~5k/sec   | 23.5k/sec | 21.26/sec |
 | **Strongly linked JNI function (with Java hook)**, 修改afl.js | ~3.5k/sec |           |           |
 
  
